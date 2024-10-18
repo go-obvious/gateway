@@ -1,34 +1,29 @@
-name: GoTest
-
-on: [push]
-
+name: Go Test
+on: [push, pull_request]
+name: Tests
 jobs:
-  build:
+  test:
     strategy:
       matrix:
+        directory: [., v2]
         go-version: [1.23.x]
         platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Golang
         uses: actions/setup-go@v5
+        working-directory: ${{ matrix.directory }}
         with:
           go-version: ${{ matrix.go-version }}
           cache-dependency-path: go.sum
+      
       - name: Install dependencies
-        run: |
-          go mod download
-      - name: Run go tests
-        run: |
-            go test -timeout 30s -cover ./...
-
-      - name: Install dependencies
-        working-directory: v2
-        run: |
-          go mod download
-      - name: Run go tests
-        working-directory: v2
-        run: |
-            go test -timeout 30s -cover ./...
+        working-directory: ${{ matrix.directory }}
+        run: go mod download
+      
+      - name: Test
+        working-directory: ${{ matrix.directory }}
+        run: go test -v -cover ./...

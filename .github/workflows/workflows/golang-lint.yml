@@ -14,15 +14,12 @@ jobs:
           go-version: '1.23.x'
           cache: false
 
-      - name: golangci-lint
+      - name: golangci-lint-root
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.56.0
           args: --timeout 3m --config .golangci.yaml
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+      - name: golangci-lint-v2
+        run: golangci-lint run --timeout 3m --config .golangci.yaml
         working-directory: v2
-        with:
-          version: v1.56.0
-          args: --timeout 3m --config .golangci.yaml

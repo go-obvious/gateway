@@ -4,18 +4,31 @@ on: [push]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        go-version: [1.23.x]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
 
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup Golang
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.x'
+          go-version: ${{ matrix.go-version }}
           cache-dependency-path: go.sum
       - name: Install dependencies
         run: |
-          go mod download     
+          go mod download
       - name: Run go tests
+        run: |
+            go test -timeout 30s -cover ./...
+
+      - name: Install dependencies
+        working-directory: v2
+        run: |
+          go mod download
+      - name: Run go tests
+        working-directory: v2
         run: |
             go test -timeout 30s -cover ./...

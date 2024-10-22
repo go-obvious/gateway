@@ -19,7 +19,3 @@ jobs:
         with:
           version: v1.56.0
           args: --timeout 3m --config .golangci.yaml
-
-      - name: golangci-lint-v2
-        run: golangci-lint run --timeout 3m --config .golangci.yaml
-        working-directory: v2

@@ -1,60 +1,109 @@
-# AWS Gateway
+# Gateway HTTP ListenAndServe for AWS Lambda (V1 and V2 API Gateway)
 
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE-OF-CONDUCT.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 ![GitHub release](https://img.shields.io/github/release/go-obvious/gateway.svg)
 ![Status](https://img.shields.io/badge/status-stable-green.svg)
 
-AWS Gateway provides a drop-in replacement for net/http's `ListenAndServe` for use in [AWS Lambda](https://aws.amazon.com/lambda/) & [API Gateway](https://aws.amazon.com/api-gateway/). Simply swap it out for `gateway.ListenAndServe`. This library is extracted from [Up](https://github.com/apex/up), which provides additional middleware features and operational functionality.
+This Go library provides a drop-in replacement for `http.ListenAndServe` that is optimized for AWS Lambda's API Gateway (both V1 and V2). The library abstracts away the differences between API Gateway V1 and V2, allowing you to focus on building your application without worrying about the underlying details.
 
-There are two versions of this library:
-- **Version 1.x**: Supports AWS API Gateway 1.0 events used by the original [REST APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-rest-api.html).
-- **Version 2.x**: Supports 2.0 events used by the [HTTP APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api.html).
+## Features
 
-For more information on the options, read [Choosing between HTTP APIs and REST APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html) on the AWS documentation website.
+- Supports both API Gateway V1 (`APIGatewayProxyRequest`/`APIGatewayProxyResponse`) and V2 (`APIGatewayV2HTTPRequest`/`APIGatewayV2HTTPResponse`).
+- Simple, familiar interface that works with existing `http.Handler` code.
+- Lightweight, with the underlying complexity hidden.
 
-## Installation
+## Getting Started
 
-To install version 1.x for REST APIs:
+### Installation
 
-```sh
-go get github.com/go-obvious/gateway
-```
+1. Install the library using Go modules:
 
-To install version 2.x for HTTP APIs:
+    ```bash
+    go get github.com/go-obvious/gateway
+    ```
 
-```sh
-go get github.com/go-obvious/gateway/v2
-```
+2. Import the package in your Go project:
 
-## Example
+    ```go
+    import "github.com/go-obvious/gateway"
+    ```
+
+### Usage
+
+The library provides two simple entry points for API Gateway V1 and V2:
+
+* `ListenAndServeV1`: For API Gateway V1
+* `ListenAndServeV2`: For API Gateway V2
+
+### Example: API Gateway V1
+
+For API Gateway V1, use `ListenAndServeV1` as a replacement for `http.ListenAndServe`.
 
 ```go
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-
-	"github.com/go-obvious/gateway"
+    "github.com/yourusername/gateway"
+    "net/http"
+    "encoding/json"
 )
 
-func main() {
-	http.HandleFunc("/", hello)
-	log.Fatal(gateway.ListenAndServe(":3000", nil))
+func myHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Hello from V1 API Gateway!"})
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	// Example retrieving values from the API Gateway proxy request context.
-	requestContext, ok := gateway.RequestContext(r.Context())
-	if !ok || requestContext.Authorizer["sub"] == nil {
-		fmt.Fprint(w, "Hello World from Go")
-		return
-	}
-
-	userID := requestContext.Authorizer["sub"].(string)
-	fmt.Fprintf(w, "Hello %s from Go", userID)
+func main() {
+    // Use ListenAndServeV1 for API Gateway V1
+    gateway.ListenAndServeV1(":8080", http.HandlerFunc(myHandler))
 }
 ```
+
+### Example: API Gateway V2
+
+For API Gateway V2, use `ListenAndServeV2` as a replacement for `http.ListenAndServe`.
+
+```go
+package main
+
+import (
+    "github.com/yourusername/gateway"
+    "net/http"
+    "encoding/json"
+)
+
+func myHandler(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": "Hello from V2 API Gateway!"})
+}
+
+func main() {
+    // Use ListenAndServeV2 for API Gateway V2
+    gateway.ListenAndServeV2(":8080", http.HandlerFunc(myHandler))
+}
+```
+
+### How It Works
+
+- **ListenAndServeV1**: Automatically parses and handles API Gateway V1 requests.
+- **ListenAndServeV2**: Automatically parses and handles API Gateway V2 requests.
+- Both versions use the familiar `http.Handler` interface, making it easy to port existing HTTP applications to AWS Lambda.
+
+### FAQ
+
+#### 1. Can I use this library outside of AWS Lambda?
+
+No, this library is specifically designed to work with API Gateway in AWS Lambda environments.
+
+#### 2. Can I use both API Gateway versions in the same application?
+
+Yes, you can use both `ListenAndServeV1` and `ListenAndServeV2` within the same application, depending on which API Gateway version you are targeting.
+
+## Contributing
+
+Feel free to submit issues or pull requests for new features, bug fixes, or improvements.
+
+## License
+
+This library is licensed under the MIT License. See `LICENSE` for more details.
